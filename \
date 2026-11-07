@@ -1,0 +1,14 @@
+#include <stdio.h>  
+#include <unistd.h>
+#include <pwd.h>
+
+int main(){
+    struct passwd current_user = *getpwuid(getuid());
+    char username[] = *current_user.pw_name;
+    printf("Welcome, %c!\n", username);
+    return 0;
+}
+
+
+
+
