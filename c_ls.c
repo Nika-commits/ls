@@ -5,25 +5,22 @@
 #include <dirent.h>
 #include <string.h>
 
+// gets the username of the caller.
 char *get_username(){
     struct passwd name = *getpwuid(getuid());
     return name.pw_name;
 }
 
-enum FLAGS {
-    L, 
-    T, 
-    S
-}; 
+// -a flag which shows hidden files as well containing (.).
+bool is_show_all = false;
 
-bool has_a_flag = false;
 int main(int argc, char *argv[]){
     printf("Hi, %s \n", get_username());
     int opt;
     while ((opt = getopt(argc, argv, "a")) != -1){
         switch (opt) {
             case 'a':
-                has_a_flag = true;
+                is_show_all = true;
                 break;
             default:
                 fprintf(stderr, "usage: %s [-a] [path] \n", argv[0]);
@@ -45,7 +42,7 @@ int main(int argc, char *argv[]){
 
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if(!has_a_flag && entry->d_name[0] == '.') continue;
+        if(!is_show_all && entry->d_name[0] == '.') continue;
         printf("%s \n", entry->d_name);
     }
     closedir(dir);
