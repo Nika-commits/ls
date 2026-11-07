@@ -1,6 +1,8 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <string.h>
 
 char *get_username(){
     struct passwd name = *getpwuid(getuid());
@@ -17,12 +19,26 @@ int main(int argc, char *argv[]){
     printf("Hi, %s \n", get_username());
     
     if(argc > 2){
-        printf("Please enter at most 2 flags \n");
-        return 0;
+        fprintf(stderr, "Error: Too many arguements \n");
+        return 1;
     }
 
     const char *path = (argc > 1) ? argv[1] : ".";
-    printf("%s \n", path);
+    DIR *dir = opendir(path);
+    if(!dir){
+        perror("opendir");
+        return 1;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0){
+            continue;
+        }
+        printf("%s \n", entry->d_name);
+    }
+
     return 0;
 }
+
 
