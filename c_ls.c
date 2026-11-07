@@ -15,15 +15,28 @@ enum FLAGS {
     S
 }; 
 
+int show_all = 0;
+
 int main(int argc, char *argv[]){
     printf("Hi, %s \n", get_username());
-    
+    int opt;
+    while ((opt = getopt(argc, argv, "a")) != -1){
+        switch (opt) {
+            case 'a':
+                show_all = 1;
+                break;
+            default:
+                fprintf(stderr, "usage: %s [-a] [path] \n", argv[0]);
+                return 1;
+        }
+    }
+
     if(argc > 2){
         fprintf(stderr, "Error: Too many arguements \n");
         return 1;
     }
 
-    const char *path = (argc > 1) ? argv[1] : ".";
+    const char *path = (optind < argc) ? argv[optind] : ".";
     DIR *dir = opendir(path);
     if(!dir){
         perror("opendir");
@@ -32,7 +45,7 @@ int main(int argc, char *argv[]){
 
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if(entry->d_name[0] == '.') continue;
+        if(!show_all && entry->d_name[0] == '.') continue;
         printf("%s \n", entry->d_name);
     }
     closedir(dir);
