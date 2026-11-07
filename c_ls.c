@@ -1,4 +1,5 @@
 #include <pwd.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -15,15 +16,14 @@ enum FLAGS {
     S
 }; 
 
-int show_all = 0;
-
+bool has_a_flag = false;
 int main(int argc, char *argv[]){
     printf("Hi, %s \n", get_username());
     int opt;
     while ((opt = getopt(argc, argv, "a")) != -1){
         switch (opt) {
             case 'a':
-                show_all = 1;
+                has_a_flag = true;
                 break;
             default:
                 fprintf(stderr, "usage: %s [-a] [path] \n", argv[0]);
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]){
 
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if(!show_all && entry->d_name[0] == '.') continue;
+        if(!has_a_flag && entry->d_name[0] == '.') continue;
         printf("%s \n", entry->d_name);
     }
     closedir(dir);
