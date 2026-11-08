@@ -7,6 +7,8 @@
 #include <dirent.h>
 #include <string.h>
 #include <sys/stat.h> 
+#include <pwd.h>
+#include <grp.h>
 
 // takes a mode and string buffer and modifies it to represent file information based on mode
 void mode_string(mode_t mode, char *str){
@@ -37,7 +39,27 @@ char *get_username(){
     return name.pw_name;
 }
 
-// -a flag which shows hidden files as well containing (.).
+void print_long(const char *dir, const char *name){
+    char fullpath[4096]; // longest filepath linux allows
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", dir, name);
+
+    struct stat st;
+    if (lstat(fullpath, &st) < 0) {
+        perror(name);
+        return;
+    }
+
+    char modes[11];
+    mode_string(st.st_mode, modes);
+    
+    struct passwd *pw = getpwuid(st.st_uid);
+    struct group *gr = getgrgid(st.st_uid);
+    const char *user = pw ? pw->pw_name : "?";
+    const char *group = gr ? gr->gr_name : "?";
+    printf("%s %s %s %s \n", modes, user, group, name);
+}
+
+// -a flag which shows hidden files as well containing (.)
 bool is_show_all = false;
 
 struct file_info {
@@ -75,7 +97,7 @@ int main(int argc, char *argv[]){
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
         if(!is_show_all && entry->d_name[0] == '.') continue;
-        printf("%s \n", entry->d_name);
+        print_long(path, entry->d_name);
     }
     closedir(dir);
 
