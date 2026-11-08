@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <string.h>
@@ -56,11 +57,28 @@ void print_long(const char *dir, const char *name){
     struct group *gr = getgrgid(st.st_uid);
     const char *user = pw ? pw->pw_name : "?";
     const char *group = gr ? gr->gr_name : "?";
-    printf("%s %s %s %s \n", modes, user, group, name);
+
+    char timebuff[64];
+    
+    struct tm *tm = localtime(&st.st_mtim.tv_sec);
+    strftime(timebuff, sizeof(timebuff), "%b %e %H:%M", tm);
+
+    printf(
+            "%s %lu %s %s %ld %s %s \n",
+            modes,
+            (unsigned long)st.st_nlink,
+            user, 
+            group,
+            (long)st.st_size,
+            timebuff,
+            name
+          );
 }
 
 // -a flag which shows hidden files as well containing (.)
 bool is_show_all = false;
+bool is_show_long_format = false;
+
 
 struct file_info {
     char *filename;
@@ -71,13 +89,16 @@ int main(int argc, char *argv[]){
    
     printf("Hi, %s \n", get_username());
     int opt;
-    while ((opt = getopt(argc, argv, "a")) != -1){
+    while ((opt = getopt(argc, argv, "al")) != -1){
         switch (opt) {
             case 'a':
                 is_show_all = true;
                 break;
+            case 'l':
+                is_show_long_format = true;
+                break;
             default:
-                fprintf(stderr, "usage: %s [-a] [path] \n", argv[0]);
+                fprintf(stderr, "usage: %s [-al] [path] \n", argv[0]);
                 return 1;
         }
     }
@@ -97,7 +118,12 @@ int main(int argc, char *argv[]){
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
         if(!is_show_all && entry->d_name[0] == '.') continue;
-        print_long(path, entry->d_name);
+        
+        if (is_show_long_format) {
+            print_long(path, entry->d_name);
+        } else {
+            printf("%s \n", entry->d_name);
+        }
     }
     closedir(dir);
 
